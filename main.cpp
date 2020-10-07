@@ -3,21 +3,21 @@
 #include <vector>
 #include <algorithm>
 #include <array>
-#include <set>
 #include <chrono>
+#include <set>
 
 #define BOARD_SIZE 7
 
-typedef std::vector<int> Field;
+struct Field
+{
+    std::array<int, BOARD_SIZE> field_array;
+    int element_in_array = BOARD_SIZE;
+};
+
 typedef std::array<Field, BOARD_SIZE> Row;
 typedef std::array<Row, BOARD_SIZE> Board;
 
 static std::vector<std::vector<int>> finalBoard;
-static long long duration1 = 0;
-static long long duration2 = 0;
-static long long duration3 = 0;
-static long long duration4 = 0;
-static long long duration5 = 0;
 
 enum class Result
 {
@@ -61,7 +61,7 @@ PuzzleBoard::PuzzleBoard(const std::vector<int> &clues)
 
     for (int i = 0; i < BOARD_SIZE; i++)
     {
-        field.push_back(i + 1);
+        field.field_array[i] = i + 1;
     }
     Row row;
     row.fill(field);
@@ -132,23 +132,6 @@ PuzzleBoard::PuzzleBoard(const std::vector<int> &clues)
             }
         }
     }
-    /*
-//check if some number is onle ones in row, not finished
-bool founded =false;
-std::array<int,BOARD_SIZE+1> element_amount;
-element_amount.fill(0);
-for (int i =0;i<BOARD_SIZE;i++){
-    for (int j=0;j<BOARD_SIZE;j++){
-        if (board[i][j].size()>1){
-            for (int k=0;k<board[i][j].size();k++){
-            element_amount[board[i][j][k]]++;
-            }
-        }
-    }
-    for (k)
-}
-*/
-    //  printBoard();
 }
 
 void PuzzleBoard::setClueArray(const std::vector<int> &clues)
@@ -165,20 +148,28 @@ void PuzzleBoard::setClueArray(const std::vector<int> &clues)
 Result PuzzleBoard::removeSize(int row, int column, int removeThisSize)
 {
     int deletedElements;
-    int sizesBeforeErasing = board[row][column].size();
+    int sizesBeforeErasing = board[row][column].element_in_array;
     if (sizesBeforeErasing == 1)
     {
         return Result::Ok;
     }
 
-    board[row][column].erase(std::remove(board[row][column].begin(), board[row][column].end(), removeThisSize), board[row][column].end());
+    for (int i = 0; i < board[row][column].element_in_array; i++)
+    {
+        if (board[row][column].field_array[i] == removeThisSize)
+        {
+            board[row][column].field_array[i] = BOARD_SIZE + 1;
+            board[row][column].element_in_array--;
+        }
+    }
+    std::sort(board[row][column].field_array.begin(), board[row][column].field_array.end());
 
-    deletedElements = sizesBeforeErasing - board[row][column].size();
+    deletedElements = sizesBeforeErasing - board[row][column].element_in_array;
 
     totalSizes -= deletedElements;
     rowSizes[row] -= deletedElements;
     columnSizes[column] -= deletedElements;
-    if ((board[row][column].size() == 1) && (deletedElements > 0))
+    if ((board[row][column].element_in_array == 1) && (deletedElements > 0))
     {
         if (checkAfterReduction(row, column) == false)
         {
@@ -199,9 +190,11 @@ Result PuzzleBoard::removeSize(int row, int column, int removeThisSize)
 Result PuzzleBoard::setSize(int row, int column, int setThisSize)
 {
 
-    int deletedElements = board[row][column].size() - 1;
+    int deletedElements = board[row][column].element_in_array - 1;
 
-    board[row][column] = {setThisSize};
+    board[row][column].field_array.fill(BOARD_SIZE + 1);
+    board[row][column].field_array[0] = setThisSize;
+    board[row][column].element_in_array = 1;
 
     totalSizes -= deletedElements;
     rowSizes[row] -= deletedElements;
@@ -239,11 +232,11 @@ bool PuzzleBoard::checkAfterReduction(int row, int column)
         }
     }
 
-    if (board[row][column].size() == 1)
+    if (board[row][column].element_in_array == 1)
     {
         for (int i = 0; i < BOARD_SIZE; i++)
         {
-            result = (removeSize(i, column, board[row][column][0]));
+            result = (removeSize(i, column, board[row][column].field_array[0]));
             if (result == Result::Wrong)
             {
                 return false;
@@ -257,7 +250,7 @@ bool PuzzleBoard::checkAfterReduction(int row, int column)
 
         for (int i = 0; i < BOARD_SIZE; i++)
         {
-            result = removeSize(row, i, board[row][column][0]);
+            result = removeSize(row, i, board[row][column].field_array[0]);
             if (result == Result::Wrong)
             {
                 return false;
@@ -281,7 +274,7 @@ bool PuzzleBoard::checkRow(int row)
 
     for (int i = 0; i < BOARD_SIZE; i++)
     {
-        allSizes.insert(board[row][i][0]);
+        allSizes.insert(board[row][i].field_array[0]);
     }
     if (allSizes.size() != BOARD_SIZE)
     {
@@ -291,10 +284,10 @@ bool PuzzleBoard::checkRow(int row)
     {
         for (int i = 0; i < BOARD_SIZE; i++)
         {
-            if (board[row][i][0] > highestSeenBuilding)
+            if (board[row][i].field_array[0] > highestSeenBuilding)
             {
                 numberOfSeenBuildings++;
-                highestSeenBuilding = board[row][i][0];
+                highestSeenBuilding = board[row][i].field_array[0];
             }
         }
 
@@ -311,10 +304,10 @@ bool PuzzleBoard::checkRow(int row)
 
         for (int i = (BOARD_SIZE - 1); i >= 0; i--)
         {
-            if (board[row][i][0] > highestSeenBuilding)
+            if (board[row][i].field_array[0] > highestSeenBuilding)
             {
                 numberOfSeenBuildings++;
-                highestSeenBuilding = board[row][i][0];
+                highestSeenBuilding = board[row][i].field_array[0];
             }
         }
 
@@ -336,7 +329,7 @@ bool PuzzleBoard::checkColumn(int column)
 
     for (int i = 0; i < BOARD_SIZE; i++)
     {
-        allSizes.insert(board[i][column][0]);
+        allSizes.insert(board[i][column].field_array[0]);
     }
 
     if (allSizes.size() != BOARD_SIZE)
@@ -348,10 +341,10 @@ bool PuzzleBoard::checkColumn(int column)
     {
         for (int i = 0; i < BOARD_SIZE; i++)
         {
-            if (board[i][column][0] > highestSeenBuilding)
+            if (board[i][column].field_array[0] > highestSeenBuilding)
             {
                 numberOfSeenBuildings++;
-                highestSeenBuilding = board[i][column][0];
+                highestSeenBuilding = board[i][column].field_array[0];
             }
         }
 
@@ -368,10 +361,10 @@ bool PuzzleBoard::checkColumn(int column)
 
         for (int i = (BOARD_SIZE - 1); i >= 0; i--)
         {
-            if (board[i][column][0] > highestSeenBuilding)
+            if (board[i][column].field_array[0] > highestSeenBuilding)
             {
                 numberOfSeenBuildings++;
-                highestSeenBuilding = board[i][column][0];
+                highestSeenBuilding = board[i][column].field_array[0];
             }
         }
 
@@ -391,7 +384,7 @@ void PuzzleBoard::finish()
         std::vector<int> myRow;
         for (int j = 0; j < BOARD_SIZE; j++)
         {
-            myRow.push_back(board[i][j][0]);
+            myRow.push_back(board[i][j].field_array[0]);
         }
         finalBoard.push_back(myRow);
         myRow.clear();
@@ -399,7 +392,7 @@ void PuzzleBoard::finish()
 }
 int PuzzleBoard::getNumberElementsInField(int row, int column)
 {
-    return board[row][column].size();
+    return board[row][column].element_in_array;
 }
 
 Field PuzzleBoard::getField(int row, int column)
@@ -424,11 +417,11 @@ void PuzzleBoard::printBoard()
         std::cout << leftClue[i] << " * ";
         for (int j = 0; j < BOARD_SIZE; j++)
         {
-            for (int k = 0; k < board[i][j].size(); k++)
+            for (int k = 0; k < board[i][j].element_in_array; k++)
             {
-                std::cout << board[i][j][k];
+                std::cout << board[i][j].field_array[k];
             }
-            for (int k = 0; k < (BOARD_SIZE - board[i][j].size()); k++)
+            for (int k = 0; k < (BOARD_SIZE - board[i][j].element_in_array); k++)
             {
                 std::cout << " ";
             }
@@ -474,10 +467,10 @@ Result reduceElement(PuzzleBoard temp_board)
         }
     }();
 
-    for (int size : reduced_field)
+    for (int i = 0; i < reduced_field.element_in_array; i++)
     {
         new_board = temp_board;
-        operation_result = new_board.setSize(row, column, size);
+        operation_result = new_board.setSize(row, column, reduced_field.field_array[i]);
 
         if (operation_result == Result::Wrong)
         {
@@ -537,17 +530,6 @@ int main()
     assert(SolvePuzzle(clues[0]) == expected[0]);
     assert(SolvePuzzle(clues[1]) == expected[1]);
     auto stop = std::chrono::steady_clock::now();
-
-    std::cout << "Duration1 time in milliseconds : "
-              << duration1 << " ms" << std::endl;
-    std::cout << "Duration2 time in milliseconds : "
-              << duration2 << " ms" << std::endl;
-    std::cout << "Duration3 time in milliseconds : "
-              << duration3 << " ms" << std::endl;
-    std::cout << "Duration4 time in milliseconds : "
-              << duration4 << " ms" << std::endl;
-    std::cout << "Duration5 time in milliseconds : "
-              << duration5 << " ms" << std::endl;
 
     std::cout << "Elapsed time in milliseconds : "
               << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count()
