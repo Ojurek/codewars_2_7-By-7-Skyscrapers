@@ -9,8 +9,8 @@
 #define BOARD_SIZE 7
 
 typedef std::vector<int> Field;
-typedef std::vector<Field> Row;
-typedef std::vector<Row> Board;
+typedef std::array<Field, BOARD_SIZE> Row;
+typedef std::array<Row, BOARD_SIZE> Board;
 
 static std::vector<std::vector<int>> finalBoard;
 static long long duration1 = 0;
@@ -33,10 +33,10 @@ private:
     int totalSizes = BOARD_SIZE * BOARD_SIZE * BOARD_SIZE;
     std::array<int, BOARD_SIZE> rowSizes;
     std::array<int, BOARD_SIZE> columnSizes;
-    std::vector<int> upperClue;
-    std::vector<int> downClue;
-    std::vector<int> leftClue;
-    std::vector<int> rightClue;
+    std::array<int, BOARD_SIZE> upperClue;
+    std::array<int, BOARD_SIZE> downClue;
+    std::array<int, BOARD_SIZE> leftClue;
+    std::array<int, BOARD_SIZE> rightClue;
     void setClueArray(const std::vector<int> &clues);
     Result removeSize(int row, int column, int removeThisSize);
     bool checkAfterReduction(int row, int column);
@@ -63,12 +63,10 @@ PuzzleBoard::PuzzleBoard(const std::vector<int> &clues)
     {
         field.push_back(i + 1);
     }
-    Row row(BOARD_SIZE, field);
+    Row row;
+    row.fill(field);
 
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        board.push_back(row);
-    }
+    board.fill(row);
 
     setClueArray(clues);
 
@@ -134,16 +132,33 @@ PuzzleBoard::PuzzleBoard(const std::vector<int> &clues)
             }
         }
     }
+    /*
+//check if some number is onle ones in row, not finished
+bool founded =false;
+std::array<int,BOARD_SIZE+1> element_amount;
+element_amount.fill(0);
+for (int i =0;i<BOARD_SIZE;i++){
+    for (int j=0;j<BOARD_SIZE;j++){
+        if (board[i][j].size()>1){
+            for (int k=0;k<board[i][j].size();k++){
+            element_amount[board[i][j][k]]++;
+            }
+        }
+    }
+    for (k)
+}
+*/
+    //  printBoard();
 }
 
 void PuzzleBoard::setClueArray(const std::vector<int> &clues)
 {
     for (int i = 0; i < BOARD_SIZE; i++)
     {
-        upperClue.push_back(clues[i]);
-        downClue.push_back(clues[3 * BOARD_SIZE - 1 - i]);
-        leftClue.push_back(clues[4 * BOARD_SIZE - 1 - i]);
-        rightClue.push_back(clues[i + BOARD_SIZE]);
+        upperClue[i] = clues[i];
+        downClue[i] = clues[3 * BOARD_SIZE - 1 - i];
+        leftClue[i] = clues[4 * BOARD_SIZE - 1 - i];
+        rightClue[i] = clues[i + BOARD_SIZE];
     }
 }
 
